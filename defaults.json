@@ -2,7 +2,7 @@
     "fix_w":128,
     "audio_data_path":"/content/drive/MyDrive/NTU - Speech Augmentation/Parallel_speech_data",
     "source_sub_directories": ["clean","noisy"],
-    "data_cache":"/content/MaskCycleGAN-Augment/data_cache",
+    "data_cache":"/content/MaskCycleGAN-Encoder/data_cache",
     "sampling_rate":8000,
     "annotations":"/content/drive/MyDrive/NTU - Speech Augmentation/annotations.csv",
     "npy_train":"/content/drive/MyDrive/NTU - Speech Augmentation/rats_train.npy",
@@ -22,8 +22,8 @@
     "noise_file":"/content/drive/MyDrive/NTU - Speech Augmentation/dkitchen_ch16.wav",
     "clean_additive_weight":0.5,
     "noisy_additive_weight":0.5,
-    "test_source":"/content/MaskCycleGAN-Augment/data_cache/noisy/test",
-    "test_results":"/content/MaskCycleGAN-Augment/results/mcg_rats_ted/audios/fake_B",
+    "test_source":"/content/MaskCycleGAN-Encoder/data_cache/noisy/test",
+    "test_results":"/content/MaskCycleGAN-Encoder/results/mcg_rats_ted/audios/fake_B",
     "use_gender_test":false,
     "nfft":256,
     "align_hop":1,
@@ -35,5 +35,5 @@
     "mssl_overlap":0.75,
     "mssl_mag_weight":1,
     "mssl_logmag_weight":1,
-    "metrics_temp_cache":"/content/MaskCycleGAN-Augment/temp"
+    "metrics_temp_cache":"/content/MaskCycleGAN-Encoder/temp"
 }
