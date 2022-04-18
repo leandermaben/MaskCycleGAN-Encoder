@@ -108,7 +108,9 @@ class MaskCycleGANVCTraining(object):
         self.generator_encoder = GeneratorEncoder(input_shape=((args.crop_size, args.crop_size)),in_channels=in_channels_gen).to(self.device)
         self.generator_decoder_A2B = GeneratorDecoder(input_shape=((args.crop_size, args.crop_size), out_channels=out_channels_gen).to(self.device)
         self.generator_decoder_B2A = GeneratorDecoder(input_shape=((args.crop_size, args.crop_size), out_channels=out_channels_gen).to(self.device)
+        self.generator_A2B = Generator(self.generator_encoder,self.generator_decoder_A2B)
         
+        self.generator_B2A = Generator(self.generator_encoder,self.generator_decoder_B2A)
         self.discriminator_A = Discriminator().to(self.device)
         self.discriminator_B = Discriminator().to(self.device)
         # Discriminator to compute 2 step adversarial loss
