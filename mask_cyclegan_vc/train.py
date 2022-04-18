@@ -11,7 +11,7 @@ from tqdm import tqdm
 import torch
 import torch.utils.data as data
 
-from mask_cyclegan_vc.model import Generator, Discriminator
+from mask_cyclegan_vc.model import GeneratorEncoder,GeneratorDecoder, Discriminator
 from args.cycleGAN_train_arg_parser import CycleGANTrainArgParser
 from dataset.noise_dataset import NoiseDataset
 from mask_cyclegan_vc.utils import decode_melspectrogram, get_mel_spectrogram_fig
@@ -102,11 +102,13 @@ class MaskCycleGANVCTraining(object):
         self.saver = ModelSaver(args)
 
         # Initialize Generators and Discriminators
-        in_channels_gen = 3 if args.use_res else 2
-        out_channels_gen = 2 if args.use_res else 1
+        in_channels_gen = 2
+        out_channels_gen = 1
 
-        self.generator_A2B = Generator(input_shape=((args.crop_size, args.crop_size)),in_channels=in_channels_gen, out_channels=out_channels_gen).to(self.device)
-        self.generator_B2A = Generator(input_shape=((args.crop_size, args.crop_size)),in_channels=in_channels_gen, out_channels=out_channels_gen).to(self.device)
+        self.generator_encoder = GeneratorEncoder(input_shape=((args.crop_size, args.crop_size)),in_channels=in_channels_gen).to(self.device)
+        self.generator_decoder_A2B = GeneratorDecoder(input_shape=((args.crop_size, args.crop_size), out_channels=out_channels_gen).to(self.device)
+        self.generator_decoder_B2A = GeneratorDecoder(input_shape=((args.crop_size, args.crop_size), out_channels=out_channels_gen).to(self.device)
+        
         self.discriminator_A = Discriminator().to(self.device)
         self.discriminator_B = Discriminator().to(self.device)
         # Discriminator to compute 2 step adversarial loss
@@ -115,8 +117,8 @@ class MaskCycleGANVCTraining(object):
         self.discriminator_B2 = Discriminator().to(self.device)
 
         # Initialize Optimizers
-        g_params = list(self.generator_A2B.parameters()) + \
-            list(self.generator_B2A.parameters())
+        g_params = list(self.generator_decoder_A2B.parameters()) + \
+            list(self.generator_decoder_B2A.parameters()) + list(self.generator_encoder.parameters())
         d_params = list(self.discriminator_A.parameters()) + \
             list(self.discriminator_B.parameters()) + \
             list(self.discriminator_A2.parameters()) + \

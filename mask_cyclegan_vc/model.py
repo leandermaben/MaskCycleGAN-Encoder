@@ -102,12 +102,8 @@ class DownSampleGenerator(nn.Module):
         # GLU
         return self.convLayer(x) * torch.sigmoid(self.convLayer_gates(x))
 
-
-class Generator(nn.Module):
-    """Generator of MaskCycleGAN-VC
-    """
-
-    def __init__(self, input_shape=(128, 128), residual_in_channels=256, in_channels=2, out_channels=1):
+class GeneratorEncoder(nn.Module):
+    def __init__(self, input_shape=(128, 128), residual_in_channels=256, in_channels=2):
         super(Generator, self).__init__()
         Cx, Tx = input_shape
         self.flattened_channels = (Cx // 4) * residual_in_channels
@@ -165,6 +161,45 @@ class Generator(nn.Module):
                                             kernel_size=3,
                                             stride=1,
                                             padding=1)
+        
+        self.glu = GLU()
+
+
+    def forward(self, x, mask):
+        # Conv2d
+        x = torch.stack((x*mask, mask, res), dim=1) # [batch_size,3,inp_size,inp_size]
+        
+        conv1 = self.conv1(x) * torch.sigmoid(self.conv1_gates(x))  # GLU
+
+        # Downsampling
+        downsample1 = self.downSample1(conv1)
+        downsample2 = self.downSample2(downsample1)
+
+        # Reshape
+        reshape2dto1d = downsample2.view(
+            downsample2.size(0), self.flattened_channels, 1, -1)
+        reshape2dto1d = reshape2dto1d.squeeze(2)
+
+        # 2D -> 1D
+        conv2dto1d_layer = self.conv2dto1dLayer(reshape2dto1d)
+        conv2dto1d_layer = self.conv2dto1dLayer_tfan(conv2dto1d_layer)
+
+        # Residual Blocks
+        residual_layer_1 = self.residualLayer1(conv2dto1d_layer)
+        residual_layer_2 = self.residualLayer2(residual_layer_1)
+        residual_layer_3 = self.residualLayer3(residual_layer_2)
+
+        return residual_layer_3
+
+class GeneratorDecoder(nn.Module):
+    """Generator of MaskCycleGAN-VC
+    """
+
+    def __init__(self, input_shape=(128, 128), residual_in_channels=256, out_channels=1):
+        super(Generator, self).__init__()
+        Cx, Tx = input_shape
+        self.flattened_channels = (Cx // 4) * residual_in_channels
+
         self.residualLayer4 = ResidualLayer(in_channels=residual_in_channels,
                                             out_channels=residual_in_channels * 2,
                                             kernel_size=3,
@@ -212,18 +247,6 @@ class Generator(nn.Module):
                                        stride=(1, 1),
                                        padding=(2, 7))
 
-    def downsample(self, in_channels, out_channels, kernel_size, stride, padding):
-        self.ConvLayer = nn.Sequential(nn.Conv1d(in_channels=in_channels,
-                                                 out_channels=out_channels,
-                                                 kernel_size=kernel_size,
-                                                 stride=stride,
-                                                 padding=padding),
-                                       nn.InstanceNorm1d(
-                                           num_features=out_channels,
-                                           affine=True),
-                                       GLU())
-
-        return self.ConvLayer
 
     def upsample(self, in_channels, out_channels, kernel_size, stride, padding):
         self.convLayer = nn.Sequential(nn.Conv2d(in_channels=in_channels,
@@ -238,33 +261,9 @@ class Generator(nn.Module):
                                        GLU())
         return self.convLayer
 
-    def forward(self, x, mask, res=None):
-        # Conv2d
-        if res is None:
-            x = torch.stack((x*mask, mask), dim=1)
-        else:
-            x = torch.stack((x*mask, mask, res), dim=1) # [batch_size,3,inp_size,inp_size]
-        
-        conv1 = self.conv1(x) * torch.sigmoid(self.conv1_gates(x))  # GLU
+    def forward(self, x):
 
-        # Downsampling
-        downsample1 = self.downSample1(conv1)
-        downsample2 = self.downSample2(downsample1)
-
-        # Reshape
-        reshape2dto1d = downsample2.view(
-            downsample2.size(0), self.flattened_channels, 1, -1)
-        reshape2dto1d = reshape2dto1d.squeeze(2)
-
-        # 2D -> 1D
-        conv2dto1d_layer = self.conv2dto1dLayer(reshape2dto1d)
-        conv2dto1d_layer = self.conv2dto1dLayer_tfan(conv2dto1d_layer)
-
-        # Residual Blocks
-        residual_layer_1 = self.residualLayer1(conv2dto1d_layer)
-        residual_layer_2 = self.residualLayer2(residual_layer_1)
-        residual_layer_3 = self.residualLayer3(residual_layer_2)
-        residual_layer_4 = self.residualLayer4(residual_layer_3)
+        residual_layer_4 = self.residualLayer4(x)
         residual_layer_5 = self.residualLayer5(residual_layer_4)
         residual_layer_6 = self.residualLayer6(residual_layer_5)
 
@@ -281,38 +280,25 @@ class Generator(nn.Module):
         upsample_layer_2 = self.upSample2(upsample_layer_1)
 
         # Conv2d
-        if res is None:
-            output = self.lastConvLayer(upsample_layer_2)
-            output = output.squeeze(1)
-            return output
-        else:
-            output = self.lastConvLayer(upsample_layer_2)
-            return output[:,0,:,:], output[:,1,:,:]
-    
-    def intermediate_outputs(self,x):
-        mask = torch.ones_like(x)
-        x = torch.stack((x*mask, mask), dim=1)
-        conv1 = self.conv1(x) * torch.sigmoid(self.conv1_gates(x))  # GLU
+        output = self.lastConvLayer(upsample_layer_2)
+        output = output.squeeze(1)
+        return output
 
-        # Downsampling
-        downsample1 = self.downSample1(conv1)
-        downsample2 = self.downSample2(downsample1)
 
-        # Reshape
-        reshape2dto1d = downsample2.view(
-            downsample2.size(0), self.flattened_channels, 1, -1)
-        reshape2dto1d = reshape2dto1d.squeeze(2)
+class Generator(nn.Module):
+    """Generator of MaskCycleGAN-VC
+    """
 
-        # 2D -> 1D
-        conv2dto1d_layer = self.conv2dto1dLayer(reshape2dto1d)
-        conv2dto1d_layer = self.conv2dto1dLayer_tfan(conv2dto1d_layer)
+    def __init__(self, encoder, decoder):
+        super(Generator, self).__init__()
+        self.encoder = encoder
+        self.decoder = decoder
 
-        # Residual Blocks
-        residual_layer_1 = self.residualLayer1(conv2dto1d_layer)
-        residual_layer_2 = self.residualLayer2(residual_layer_1)
-        residual_layer_3 = self.residualLayer3(residual_layer_2)
-
-        return residual_layer_1,residual_layer_2,residual_layer_3
+    def forward(self, x, mask):
+       encoding = self.encoder(x,mask)
+       output = self.decoder(encoding)
+       return output
+        
 
 
 class Discriminator(nn.Module):
