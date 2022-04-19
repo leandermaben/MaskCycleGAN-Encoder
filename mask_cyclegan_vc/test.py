@@ -7,7 +7,7 @@ import torch
 import torch.utils.data as data
 import torchaudio
 
-from mask_cyclegan_vc.model import Generator, Discriminator
+from mask_cyclegan_vc.model import Generator, Discriminator, GeneratorEncoder, GeneratorDecoder
 from args.cycleGAN_test_arg_parser import CycleGANTestArgParser
 from dataset.vc_dataset import VCDataset
 from dataset.base_functions import make_dataset
@@ -65,9 +65,11 @@ class MaskCycleGANVCTesting(object):
                                                            drop_last=False)
 
         # Generator
-        in_channels= 3 if self.use_res else 2
-        out_channels = 2 if self.use_res else 1
-        self.generator = Generator(in_channels=in_channels, out_channels=out_channels).to(self.device)
+        in_channels=2
+        out_channels =1
+        self.generator_encoder = GeneratorEncoder(input_shape=(args.crop_size, args.crop_size),in_channels=in_channels).to(self.device)
+        self.generator_decoder = GeneratorDecoder(input_shape=(args.crop_size, args.crop_size), out_channels=out_channels).to(self.device)
+        self.generator = Generator(self.generator_encoder,self.generator_decoder).to(self.device)
         self.generator.eval()
 
         # Load Generator from ckpt

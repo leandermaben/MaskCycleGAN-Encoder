@@ -11,7 +11,7 @@ from tqdm import tqdm
 import torch
 import torch.utils.data as data
 
-from mask_cyclegan_vc.model import GeneratorEncoder,GeneratorDecoder, Discriminator
+from mask_cyclegan_vc.model import GeneratorEncoder,GeneratorDecoder, Discriminator, Generator
 from args.cycleGAN_train_arg_parser import CycleGANTrainArgParser
 from dataset.noise_dataset import NoiseDataset
 from mask_cyclegan_vc.utils import decode_melspectrogram, get_mel_spectrogram_fig
@@ -105,11 +105,11 @@ class MaskCycleGANVCTraining(object):
         in_channels_gen = 2
         out_channels_gen = 1
 
-        self.generator_encoder = GeneratorEncoder(input_shape=((args.crop_size, args.crop_size)),in_channels=in_channels_gen).to(self.device)
-        self.generator_decoder_A2B = GeneratorDecoder(input_shape=((args.crop_size, args.crop_size), out_channels=out_channels_gen).to(self.device)
-        self.generator_decoder_B2A = GeneratorDecoder(input_shape=((args.crop_size, args.crop_size), out_channels=out_channels_gen).to(self.device)
-        self.generator_A2B = Generator(self.generator_encoder,self.generator_decoder_A2B)
-        
+        self.generator_encoder = GeneratorEncoder(input_shape=(args.crop_size, args.crop_size),in_channels=in_channels_gen).to(self.device)
+        self.generator_decoder_A2B = GeneratorDecoder(input_shape=(args.crop_size, args.crop_size), out_channels=out_channels_gen).to(self.device)
+        self.generator_decoder_B2A = GeneratorDecoder(input_shape=(args.crop_size, args.crop_size), out_channels=out_channels_gen).to(self.device)
+        self.generator_A2B = Generator(self.generator_encoder,self.generator_decoder_A2B).to(self.device)
+
         self.generator_B2A = Generator(self.generator_encoder,self.generator_decoder_B2A)
         self.discriminator_A = Discriminator().to(self.device)
         self.discriminator_B = Discriminator().to(self.device)

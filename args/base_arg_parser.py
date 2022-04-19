@@ -8,8 +8,14 @@ import os
 import torch
 import numpy as np
 import random
+import json
 
-DATAROOT_DEFAULT = '/content/MaskCycleGAN-Augment/data_cache'
+#Loading defaults
+
+with open('defaults.json','r') as f:
+    defaults = json.load(f)
+
+DATAROOT_DEFAULT = defaults["data_cache"]
 
 class BaseArgParser(object):
     """

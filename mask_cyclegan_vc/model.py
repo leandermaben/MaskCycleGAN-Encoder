@@ -104,7 +104,7 @@ class DownSampleGenerator(nn.Module):
 
 class GeneratorEncoder(nn.Module):
     def __init__(self, input_shape=(128, 128), residual_in_channels=256, in_channels=2):
-        super(Generator, self).__init__()
+        super(GeneratorEncoder, self).__init__()
         Cx, Tx = input_shape
         self.flattened_channels = (Cx // 4) * residual_in_channels
         print('#'*25)        
@@ -167,7 +167,7 @@ class GeneratorEncoder(nn.Module):
 
     def forward(self, x, mask):
         # Conv2d
-        x = torch.stack((x*mask, mask, res), dim=1) # [batch_size,3,inp_size,inp_size]
+        x = torch.stack((x*mask, mask), dim=1) # [batch_size,3,inp_size,inp_size]
         
         conv1 = self.conv1(x) * torch.sigmoid(self.conv1_gates(x))  # GLU
 
@@ -196,7 +196,7 @@ class GeneratorDecoder(nn.Module):
     """
 
     def __init__(self, input_shape=(128, 128), residual_in_channels=256, out_channels=1):
-        super(Generator, self).__init__()
+        super(GeneratorDecoder, self).__init__()
         Cx, Tx = input_shape
         self.flattened_channels = (Cx // 4) * residual_in_channels
 
